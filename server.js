@@ -28,7 +28,8 @@ app.use(express.static('public'));
 // Request logging middleware
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    console.log('Body:', JSON.stringify(req.body).substring(0, 200)); // Log body (truncated)
+    const bodyStr = req.body ? JSON.stringify(req.body) : '';
+    console.log('Body:', bodyStr.substring(0, 200)); // Log body (truncated)
 
     // Capture response status
     const originalSend = res.send;
@@ -99,15 +100,15 @@ app.post('/download', (req, res) => {
         }
     }
 
-    const process = spawn(ytDlpPath, args);
+    const ytDlpProcess = spawn(ytDlpPath, args);
 
-    process.on('error', (err) => {
+    ytDlpProcess.on('error', (err) => {
         console.error('Failed to start yt-dlp process:', err);
         broadcastProgress(jobId, { status: 'error', message: 'Internal Server Error: Failed to start downloader' });
         jobs.delete(jobId);
     });
 
-    process.stdout.on('data', (data) => {
+    ytDlpProcess.stdout.on('data', (data) => {
         const lines = data.toString().split('\n');
         for (const line of lines) {
             const job = jobs.get(jobId);
@@ -144,11 +145,11 @@ app.post('/download', (req, res) => {
         }
     });
 
-    process.stderr.on('data', (data) => {
+    ytDlpProcess.stderr.on('data', (data) => {
         // console.error(`stderr: ${data}`); // Optional: keep logs clean
     });
 
-    process.on('close', (code) => {
+    ytDlpProcess.on('close', (code) => {
         console.log(`Job ${jobId} finished with code ${code}`);
         if (code === 0) {
             broadcastProgress(jobId, { status: 'completed', filename: `${finalFilename}.mp4` });

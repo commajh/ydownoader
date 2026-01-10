@@ -56,7 +56,6 @@ app.post('/download', (req, res) => {
         '--ffmpeg-location', ffmpegPath,
         '-f', 'bestvideo+bestaudio/best',
         '--merge-output-format', 'mp4', // This triggers the merge
-        '-k', // Keep intermediate files
         '--postprocessor-args', 'merger:-c:v copy -c:a aac', // Force video copy and Audio to AAC (most compatible open standard)
         '-o', outputTemplate,
         '--newline', // Important for parsing line-by-line

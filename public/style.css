@@ -20,11 +20,16 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     min-height: 100vh;
+    min-height: 100dvh;
+    /* For mobile browsers with dynamic bars */
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    overflow-y: auto;
+    /* Allow scrolling */
     position: relative;
+    padding: 1rem 0;
+    /* Add some vertical breathing room */
 }
 
 .background-glow {
@@ -197,9 +202,30 @@ button:disabled {
     color: #4ade80;
 }
 
-footer {
-    text-align: center;
-    margin-top: 2rem;
-    color: #475569;
-    font-size: 0.8rem;
+color: #475569;
+font-size: 0.8rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+    .container {
+        padding: 1rem;
+    }
+
+    header h1 {
+        font-size: 2.2rem;
+    }
+
+    header p {
+        font-size: 1rem;
+    }
+
+    .card {
+        padding: 1.5rem;
+    }
+
+    input[type="text"] {
+        font-size: 16px;
+        /* Prevent iOS zoom */
+    }
 }

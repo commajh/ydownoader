@@ -37,8 +37,17 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to start download');
+            let errorMessage = 'Failed to start download';
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                // If JSON parse fails, read text (it might be an HTML error page)
+                const text = await response.text();
+                console.error('Non-JSON response:', text);
+                errorMessage = `Server Error: ${response.status} ${response.statusText}`;
+            }
+            throw new Error(errorMessage);
         }
 
         const { jobId } = await response.json();

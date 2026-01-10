@@ -4,8 +4,19 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const ffmpegPath = require('ffmpeg-static');
+// const ffmpegPath = require('ffmpeg-static'); // Removing reliance on ffmpeg-static for Linux
 const os = require('os');
+
+// Determine ffmpeg path relative to platform
+let ffmpegBinary = 'ffmpeg';
+if (process.platform === 'win32') {
+    // On Windows, use the static binary if available, or assume it's in path
+    try {
+        ffmpegBinary = require('ffmpeg-static');
+    } catch (e) {
+        console.log('ffmpeg-static not found, assuming global ffmpeg');
+    }
+}
 
 const app = express();
 const PORT = 3000;
@@ -72,6 +83,12 @@ app.post('/download', (req, res) => {
     }
 
     const process = spawn(ytDlpPath, args);
+
+    process.on('error', (err) => {
+        console.error('Failed to start yt-dlp process:', err);
+        broadcastProgress(jobId, { status: 'error', message: 'Internal Server Error: Failed to start downloader' });
+        jobs.delete(jobId);
+    });
 
     process.stdout.on('data', (data) => {
         const lines = data.toString().split('\n');
@@ -167,18 +184,8 @@ app.get('/file/:filename', (req, res) => {
     }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    const interfaces = os.networkInterfaces();
-    let localIp = 'localhost';
-    for (const devName in interfaces) {
-        const iface = interfaces[devName];
-        for (const alias of iface) {
-            if (alias.family === 'IPv4' && !alias.internal) {
-                localIp = alias.address;
-            }
-        }
-    }
+app.listen(PORT, 'localhost', () => {
     console.log(`Server running at:`);
     console.log(`- Local:   http://localhost:${PORT}`);
-    console.log(`- Network: http://${localIp}:${PORT}`);
+    // console.log(`- Network: http://${localIp}:${PORT}`); // Commented out per user request
 });

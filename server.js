@@ -88,7 +88,6 @@ app.post('/download', (req, res) => {
         '--postprocessor-args', 'merger:-c:v copy -c:a aac', // Force video copy and Audio to AAC (most compatible open standard)
         '-o', outputTemplate,
         '--newline', // Important for parsing line-by-line
-        '--newline', // Important for parsing line-by-line
         url
     ];
 
@@ -150,7 +149,7 @@ app.post('/download', (req, res) => {
     });
 
     ytDlpProcess.stderr.on('data', (data) => {
-        // console.error(`stderr: ${data}`); // Optional: keep logs clean
+        console.error(`stderr: ${data}`); // Enabled for debugging
     });
 
     ytDlpProcess.on('close', (code) => {
@@ -198,8 +197,11 @@ app.get('/file/:filename', (req, res) => {
     if (fs.existsSync(filePath)) {
         res.download(filePath, filename, (err) => {
             if (err) console.error(err);
-            // Cleanup after send - DISABLED
-            // fs.unlink(filePath, () => { });
+            if (err) console.error(err);
+            // Cleanup after send
+            fs.unlink(filePath, () => {
+                console.log(`Deleted file: ${filePath}`);
+            });
         });
     } else {
         res.status(404).send('File not found');

@@ -81,7 +81,7 @@ app.post('/download', (req, res) => {
 
     // Run yt-dlp asynchronously
     const args = [
-        '--ffmpeg-location', ffmpegPath,
+        '--ffmpeg-location', ffmpegBinary,
         '-f', 'bestvideo+bestaudio/best',
         '--merge-output-format', 'mp4', // This triggers the merge
         '--postprocessor-args', 'merger:-c:v copy -c:a aac', // Force video copy and Audio to AAC (most compatible open standard)

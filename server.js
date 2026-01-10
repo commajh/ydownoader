@@ -88,8 +88,12 @@ app.post('/download', (req, res) => {
         '--postprocessor-args', 'merger:-c:v copy -c:a aac', // Force video copy and Audio to AAC (most compatible open standard)
         '-o', outputTemplate,
         '--newline', // Important for parsing line-by-line
+        '--newline', // Important for parsing line-by-line
         url
     ];
+
+    // Check if we should keep intermediate files (optional, currently disabled)
+    // args.push('-k');
 
     // Determine yt-dlp path based on platform
     let ytDlpPath = 'yt-dlp'; // Default to global command (Docker/Linux)

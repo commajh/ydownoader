@@ -8,13 +8,15 @@ const crypto = require('crypto');
 const os = require('os');
 
 // Determine ffmpeg path relative to platform
-let ffmpegBinary = 'ffmpeg';
+let ffmpegBinary = null; // Default: let yt-dlp find it in PATH (Linux/Docker)
 if (process.platform === 'win32') {
     // On Windows, use the static binary if available, or assume it's in path
     try {
         ffmpegBinary = require('ffmpeg-static');
     } catch (e) {
         console.log('ffmpeg-static not found, assuming global ffmpeg');
+        // If not found, we can try 'ffmpeg' but usually on Windows we want the full path if possible
+        // forcing null will let yt-dlp try to find it in PATH
     }
 }
 

@@ -25,6 +25,23 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Request logging middleware
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    console.log('Body:', JSON.stringify(req.body).substring(0, 200)); // Log body (truncated)
+
+    // Capture response status
+    const originalSend = res.send;
+    res.send = function (body) {
+        console.log(`[${new Date().toISOString()}] Response Status: ${res.statusCode}`);
+        if (res.statusCode >= 400) {
+            console.error('Response Body:', body);
+        }
+        originalSend.apply(res, arguments);
+    };
+    next();
+});
+
 // Store active jobs: jobId -> { parsedProgress: number, clients: Response[] }
 const jobs = new Map();
 

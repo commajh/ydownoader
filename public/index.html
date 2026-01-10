@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>yDownloader - Premium YouTube Downloader</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="background-glow"></div>
+    <div class="container">
+        <header>
+            <h1>yDownloader</h1>
+            <p>Download YouTube videos in high quality MP4</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <div class="input-group">
+                    <label for="url">Video URL</label>
+                    <input type="text" id="url" placeholder="Paste YouTube link here..." autocomplete="off">
+                </div>
+
+                <div class="input-group">
+                    <label for="filename">Filename (Optional)</label>
+                    <input type="text" id="filename" placeholder="e.g. funny-cat-video" autocomplete="off">
+                </div>
+
+                <div class="actions">
+                    <button id="downloadBtn">
+                        <span class="btn-text">Download MP4</span>
+                    </button>
+                </div>
+
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-label">
+                        <span id="progressText">Getting info...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <div id="statusMessage" class="status-message"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Powered by yt-dlp & antigravity</p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -50,61 +50,71 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
             throw new Error(errorMessage);
         }
 
-        const { jobId } = await response.json();
-
-        // Subscribe to events
-        const eventSource = new EventSource(`/events/${jobId}`);
-
-        eventSource.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-
-            if (data.status === 'downloading') {
-                const percent = data.progress;
-                progressFill.style.width = `${percent}%`;
-                progressPercent.textContent = `${percent}%`;
-
-                if (data.phase === 'video') {
-                    progressText.textContent = 'Downloading Video...';
-                } else if (data.phase === 'audio') {
-                    progressText.textContent = 'Downloading Audio...';
-                } else {
-                    progressText.textContent = 'Downloading...';
-                }
-            } else if (data.status === 'merging') {
-                progressText.textContent = 'Merging video and audio...';
-                progressFill.style.width = '100%';
-            } else if (data.status === 'completed') {
-                progressText.textContent = 'Download Complete!';
-                progressFill.style.width = '100%';
-
-                eventSource.close();
-                downloadFile(data.filename);
-
-                statusMessage.textContent = 'Success!';
-                statusMessage.className = 'status-message success';
-                downloadBtn.disabled = false;
-
-                // Optional: hide progress bar after delay
-                // setTimeout(() => progressContainer.style.display = 'none', 3000);
-            } else if (data.status === 'error') {
-                eventSource.close();
-                throw new Error(data.message);
-            }
-        };
-
-        eventSource.onerror = () => {
-            eventSource.close();
-            // Don't throw here immediately, wait for specific error message or timeout
-            // But if connection dies, we might assume failure
-        };
-
-    } catch (error) {
-        console.error(error);
-        statusMessage.textContent = `Error: ${error.message}`;
-        statusMessage.className = 'status-message error';
-        downloadBtn.disabled = false;
-        progressContainer.style.display = 'none';
     }
+
+        let jobId;
+    try {
+        const data = await response.json();
+        jobId = data.jobId;
+    } catch (e) {
+        const text = await response.text();
+        console.error('Invalid JSON response:', text);
+        throw new Error('Server returned invalid response (not JSON). See console for details.');
+    }
+
+    // Subscribe to events
+    const eventSource = new EventSource(`/events/${jobId}`);
+
+    eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.status === 'downloading') {
+            const percent = data.progress;
+            progressFill.style.width = `${percent}%`;
+            progressPercent.textContent = `${percent}%`;
+
+            if (data.phase === 'video') {
+                progressText.textContent = 'Downloading Video...';
+            } else if (data.phase === 'audio') {
+                progressText.textContent = 'Downloading Audio...';
+            } else {
+                progressText.textContent = 'Downloading...';
+            }
+        } else if (data.status === 'merging') {
+            progressText.textContent = 'Merging video and audio...';
+            progressFill.style.width = '100%';
+        } else if (data.status === 'completed') {
+            progressText.textContent = 'Download Complete!';
+            progressFill.style.width = '100%';
+
+            eventSource.close();
+            downloadFile(data.filename);
+
+            statusMessage.textContent = 'Success!';
+            statusMessage.className = 'status-message success';
+            downloadBtn.disabled = false;
+
+            // Optional: hide progress bar after delay
+            // setTimeout(() => progressContainer.style.display = 'none', 3000);
+        } else if (data.status === 'error') {
+            eventSource.close();
+            throw new Error(data.message);
+        }
+    };
+
+    eventSource.onerror = () => {
+        eventSource.close();
+        // Don't throw here immediately, wait for specific error message or timeout
+        // But if connection dies, we might assume failure
+    };
+
+} catch (error) {
+    console.error(error);
+    statusMessage.textContent = `Error: ${error.message}`;
+    statusMessage.className = 'status-message error';
+    downloadBtn.disabled = false;
+    progressContainer.style.display = 'none';
+}
 });
 
 function downloadFile(filename) {

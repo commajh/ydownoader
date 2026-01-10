@@ -184,8 +184,9 @@ app.get('/file/:filename', (req, res) => {
     }
 });
 
-app.listen(PORT, 'localhost', () => {
+// Render and Docker require binding to 0.0.0.0 to be accessible
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running at:`);
     console.log(`- Local:   http://localhost:${PORT}`);
-    // console.log(`- Network: http://${localIp}:${PORT}`); // Commented out per user request
+    // console.log(`- Network: http://${localIp}:${PORT}`); // Network IP hidden per user request
 });

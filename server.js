@@ -23,6 +23,9 @@ if (process.platform === 'win32') {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Maximum concurrent download jobs allowed
+const MAX_CONCURRENT_JOBS = 5;
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
@@ -67,6 +70,17 @@ app.post('/download', (req, res) => {
         return res.status(400).json({ error: 'URL is required' });
     }
 
+    // Check concurrent job limit
+    const activeJobs = jobs.size;
+    if (activeJobs >= MAX_CONCURRENT_JOBS) {
+        console.log(`Job limit reached: ${activeJobs}/${MAX_CONCURRENT_JOBS} active jobs`);
+        return res.status(429).json({
+            error: 'Too many concurrent downloads',
+            message: `Maximum ${MAX_CONCURRENT_JOBS} concurrent downloads allowed. Please try again later.`,
+            activeJobs: activeJobs
+        });
+    }
+
     const jobId = crypto.randomUUID();
     const finalFilename = filename ? filename.replace(/[^a-zA-Z0-9_\-\.]/g, '_') : `video_${jobId}`;
     const outputTemplate = path.join(__dirname, 'downloads', `${finalFilename}.%(ext)s`);
@@ -85,9 +99,11 @@ app.post('/download', (req, res) => {
     // Run yt-dlp asynchronously
     const args = [
         '--ffmpeg-location', ffmpegBinary,
-        '-f', 'bestvideo+bestaudio/best',
+        '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best', // Prefer mp4/m4a for better iOS compatibility
         '--merge-output-format', 'mp4', // This triggers the merge
-        '--postprocessor-args', 'merger:-c:v copy -c:a aac', // Force video copy and Audio to AAC (most compatible open standard)
+        // Re-encode video to H.264 (libx264) for iPhone compatibility
+        // Use AAC audio codec, add faststart flag for web/mobile streaming
+        '--postprocessor-args', 'merger:-c:v libx264 -preset fast -crf 23 -c:a aac -b:a 192k -movflags +faststart',
         '-o', outputTemplate,
         '--newline', // Important for parsing line-by-line
         url
@@ -163,7 +179,10 @@ app.post('/download', (req, res) => {
         }
 
         // Remove job after a delay to allow last event to send
-        setTimeout(() => jobs.delete(jobId), 10000);
+        setTimeout(() => {
+            jobs.delete(jobId);
+            console.log(`Job ${jobId} removed. Active jobs: ${jobs.size}/${MAX_CONCURRENT_JOBS}`);
+        }, 10000);
     });
 
     // Return current status immediately
@@ -210,9 +229,20 @@ app.get('/file/:filename', (req, res) => {
     }
 });
 
-// Render and Docker require binding to 0.0.0.0 to be accessible
+// Bind to 0.0.0.0 to allow access from other devices on the network
 app.listen(PORT, '0.0.0.0', () => {
+    const interfaces = os.networkInterfaces();
+    let localIp = 'localhost';
+    for (const devName in interfaces) {
+        const iface = interfaces[devName];
+        for (const alias of iface) {
+            if (alias.family === 'IPv4' && !alias.internal) {
+                localIp = alias.address;
+            }
+        }
+    }
     console.log(`Server running at:`);
     console.log(`- Local:   http://localhost:${PORT}`);
-    // console.log(`- Network: http://${localIp}:${PORT}`); // Network IP hidden per user request
+    console.log(`- Network: http://${localIp}:${PORT}`);
+    console.log(`\nUse the Network URL to access from iPad or other devices on the same Wi-Fi`);
 });

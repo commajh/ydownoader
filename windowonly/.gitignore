@@ -1,0 +1,25 @@
+# 빌드 제외 파일
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+dist/
+*.spec.backup
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 테스트 다운로드
+downloads/
+*.mp4
+*.webm
